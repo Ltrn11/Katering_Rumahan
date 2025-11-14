@@ -36,7 +36,7 @@ session_start();
         </form>
 
         <div class="text-center mt-3">
-            Belum punya akun? <a href="signup.php">Daftar di sini</a>
+            Belum punya aku? <a href="signup.php">Daftar di sini</a>
         </div>
     </div>
 </body>
