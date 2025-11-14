@@ -38,7 +38,7 @@
 </nav>
 
 <div class="container mt-5">
-  <h2>Ayo ngocok bersama</h2>
+  <h2>Selamat Datang di Katering Rumahan</h2>
   <p>Masakan rumah penuh cinta untuk setiap kesempatan.</p>
 </div>
 
