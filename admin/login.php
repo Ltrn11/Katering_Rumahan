@@ -1,4 +1,4 @@
-<<?php
+<?php
 session_start();
 require '../koneksi.php';
 
@@ -7,9 +7,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT * FROM Pengguna WHERE email = ? AND peran = 'admin'");
-    $stmt->execute([$email]);
-    $data = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Pakai MySQLi bukan PDO
+    $stmt = $koneksi->prepare("SELECT * FROM Pengguna WHERE email = ? AND peran = 'admin'");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $data = $result->fetch_assoc();
 
     if ($data) {
         if (password_verify($password, $data['kata_sandi'])) {

@@ -1,60 +1,39 @@
 <?php
 session_start();
+require 'koneksi.php';
 
-// Cek apakah user sudah login
-if (!isset($_SESSION['user_id'])) {
-    header('Location: index.php');
-    exit();
+// TIDAK ADA pengecekan login - semua orang bisa akses dashboard
+
+// Get kategori untuk filter
+$query_kategori = "SELECT * FROM Kategori ORDER BY nama_kategori";
+$result_kategori = $koneksi->query($query_kategori);
+
+// Filter produk berdasarkan kategori atau search
+$where = "WHERE p.tersedia = 1";
+$params = [];
+
+if (isset($_GET['kategori']) && !empty($_GET['kategori'])) {
+    $kategori_id = (int)$_GET['kategori'];
+    $where .= " AND p.id_kategori = $kategori_id";
 }
 
-// Konfigurasi database
-$host = 'localhost';
-$dbname = 'katering_rumahan';
-$username = 'root';
-$password = '';
+if (isset($_GET['search']) && !empty($_GET['search'])) {
+    $search = $koneksi->real_escape_string($_GET['search']);
+    $where .= " AND p.nama_produk LIKE '%$search%'";
+}
 
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // Get kategori untuk filter
-    $stmt_kategori = $conn->query("SELECT * FROM Kategori ORDER BY nama_kategori");
-    $kategoris = $stmt_kategori->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Filter produk berdasarkan kategori atau search
-    $where = "WHERE p.tersedia = 1";
-    
-    if (isset($_GET['kategori']) && !empty($_GET['kategori'])) {
-        $kategori_id = $_GET['kategori'];
-        $where .= " AND p.id_kategori = :kategori_id";
-    }
-    
-    if (isset($_GET['search']) && !empty($_GET['search'])) {
-        $search = '%' . $_GET['search'] . '%';
-        $where .= " AND p.nama_produk LIKE :search";
-    }
-    
-    // Get produk
-    $query = "SELECT p.*, k.nama_kategori 
-              FROM Produk p 
-              JOIN Kategori k ON p.id_kategori = k.id_kategori 
-              $where 
-              ORDER BY p.id_produk DESC";
-    
-    $stmt_produk = $conn->prepare($query);
-    
-    if (isset($kategori_id)) {
-        $stmt_produk->bindParam(':kategori_id', $kategori_id);
-    }
-    if (isset($search)) {
-        $stmt_produk->bindParam(':search', $search);
-    }
-    
-    $stmt_produk->execute();
-    $produks = $stmt_produk->fetchAll(PDO::FETCH_ASSOC);
-    
-} catch(PDOException $e) {
-    die("Koneksi gagal: " . $e->getMessage());
+// Get produk
+$query_produk = "SELECT p.*, k.nama_kategori 
+                FROM Produk p 
+                JOIN Kategori k ON p.id_kategori = k.id_kategori 
+                $where 
+                ORDER BY p.id_produk DESC";
+$result_produk = $koneksi->query($query_produk);
+
+// Hitung jumlah item di cart (kalau user sudah login)
+$cart_count = 0;
+if (isset($_SESSION['cart'])) {
+    $cart_count = count($_SESSION['cart']);
 }
 ?>
 <!DOCTYPE html>
@@ -132,6 +111,8 @@ try {
             font-weight: 600;
             transition: all 0.3s;
             margin: 5px;
+            text-decoration: none;
+            display: inline-block;
         }
         
         .filter-btn:hover, .filter-btn.active {
@@ -264,25 +245,44 @@ try {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">
+                        <a class="nav-link active" href="dashboard.php">
                             <i class="bi bi-house-door me-1"></i>Menu
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="pesanan.php">
-                            <i class="bi bi-cart me-1"></i>Pesanan
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="profil.php">
-                            <i class="bi bi-person me-1"></i>Profil
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="logout.php">
-                            <i class="bi bi-box-arrow-right me-1"></i>Keluar
-                        </a>
-                    </li>
+                    
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <!-- Menu untuk user yang SUDAH login -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="cart.php">
+                                <i class="bi bi-cart me-1"></i>Pesanan
+                                <?php if ($cart_count > 0): ?>
+                                    <span class="badge bg-danger"><?php echo $cart_count; ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="profil.php">
+                                <i class="bi bi-person me-1"></i>Profil
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout.php">
+                                <i class="bi bi-box-arrow-right me-1"></i>Keluar
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <!-- Menu untuk user yang BELUM login -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.php">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="register.php">
+                                <i class="bi bi-person-plus me-1"></i>Daftar
+                            </a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
@@ -331,23 +331,61 @@ try {
             <a href="dashboard.php" class="filter-btn <?php echo !isset($_GET['kategori']) ? 'active' : ''; ?>">
                 Semua
             </a>
-            <?php foreach ($kategoris as $kat): ?>
+            <?php while($kat = $result_kategori->fetch_assoc()): ?>
                 <a href="?kategori=<?php echo $kat['id_kategori']; ?>" 
                    class="filter-btn <?php echo (isset($_GET['kategori']) && $_GET['kategori'] == $kat['id_kategori']) ? 'active' : ''; ?>">
                     <?php echo htmlspecialchars($kat['nama_kategori']); ?>
                 </a>
-            <?php endforeach; ?>
+            <?php endwhile; ?>
         </div>
 
         <!-- Products Grid -->
-        <?php if (count($produks) > 0): ?>
+        <?php if ($result_produk->num_rows > 0): ?>
             <div class="row">
-                <?php foreach ($produks as $produk): ?>
+                <?php while($produk = $result_produk->fetch_assoc()): ?>
                     <div class="col-md-4 col-lg-4">
                         <div class="card product-card">
                             <div class="position-relative">
-                                <img src="https://source.unsplash.com/400x300/?food,<?php echo urlencode($produk['nama_produk']); ?>" 
-                                     class="product-img" alt="<?php echo htmlspecialchars($produk['nama_produk']); ?>">
+                                <?php
+                                // Tentukan gambar berdasarkan nama produk
+                                $foto_id = 'photo-1546069901-ba9599a7e63c'; // default: salad
+                                $nama_lower = strtolower($produk['nama_produk']);
+                                
+                                if (strpos($nama_lower, 'nasi') !== false) {
+                                    $foto_id = 'photo-1603133872878-684f208fb84b'; // nasi
+                                } elseif (strpos($nama_lower, 'ayam') !== false || strpos($nama_lower, 'chicken') !== false) {
+                                    $foto_id = 'photo-1598103442097-8b74394b95c6'; // ayam
+                                } elseif (strpos($nama_lower, 'ikan') !== false || strpos($nama_lower, 'fish') !== false) {
+                                    $foto_id = 'photo-1559847844-5315695dadae'; // ikan
+                                } elseif (strpos($nama_lower, 'soto') !== false || strpos($nama_lower, 'soup') !== false) {
+                                    $foto_id = 'photo-1547592166-23ac45744acd'; // soup
+                                } elseif (strpos($nama_lower, 'mie') !== false || strpos($nama_lower, 'noodle') !== false) {
+                                    $foto_id = 'photo-1569718212165-3a8278d5f624'; // mie
+                                } elseif (strpos($nama_lower, 'sate') !== false || strpos($nama_lower, 'satay') !== false) {
+                                    $foto_id = 'photo-1529006557810-274b9b2fc783'; // sate
+                                } elseif (strpos($nama_lower, 'bakso') !== false) {
+                                    $foto_id = 'photo-1607330289024-1aa69373b863'; // bakso
+                                } elseif (strpos($nama_lower, 'gado') !== false || strpos($nama_lower, 'salad') !== false) {
+                                    $foto_id = 'photo-1546069901-ba9599a7e63c'; // salad
+                                } elseif (strpos($nama_lower, 'rendang') !== false) {
+                                    $foto_id = 'photo-1625943553852-781c6dd46faa'; // rendang
+                                } elseif (strpos($nama_lower, 'bebek') !== false || strpos($nama_lower, 'duck') !== false) {
+                                    $foto_id = 'photo-1626082927389-6cd097cdc6ec'; // bebek
+                                } elseif (strpos($nama_lower, 'jus') !== false || strpos($nama_lower, 'juice') !== false) {
+                                    $foto_id = 'photo-1600271886742-f049cd451bba'; // jus
+                                } elseif (strpos($nama_lower, 'es') !== false || strpos($nama_lower, 'ice') !== false) {
+                                    $foto_id = 'photo-1563805042-7684c019e1cb'; // es/minuman
+                                } elseif (strpos($nama_lower, 'kue') !== false || strpos($nama_lower, 'cake') !== false) {
+                                    $foto_id = 'photo-1578985545062-69928b1d9587'; // kue
+                                } elseif (strpos($nama_lower, 'tahu') !== false || strpos($nama_lower, 'tempe') !== false) {
+                                    $foto_id = 'photo-1546833999-b9f581a1996d'; // tahu/tempe
+                                } elseif (strpos($nama_lower, 'udang') !== false || strpos($nama_lower, 'shrimp') !== false) {
+                                    $foto_id = 'photo-1565680018434-b513d5e5fd47'; // udang
+                                }
+                                ?>
+                                <img src="https://images.unsplash.com/<?php echo $foto_id; ?>?w=400&h=300&fit=crop" 
+                                     class="product-img" alt="<?php echo htmlspecialchars($produk['nama_produk']); ?>"
+                                     onerror="this.src='https://via.placeholder.com/400x300/4A90E2/FFFFFF?text=Makanan'">
                                 <span class="product-badge">Tersedia</span>
                             </div>
                             <div class="card-body">
@@ -369,7 +407,7 @@ try {
                             </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <?php endwhile; ?>
             </div>
         <?php else: ?>
             <div class="empty-state">
@@ -402,3 +440,6 @@ try {
     </script>
 </body>
 </html>
+<?php
+$koneksi->close();
+?>
