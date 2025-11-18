@@ -1,4 +1,4 @@
-<?php
+ini bagian index<?php
 session_start();
 require 'koneksi.php';
 
