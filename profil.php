@@ -370,6 +370,12 @@ $koneksi->close();
                                     <div>
                                         <strong>#<?php echo str_pad($pesanan['id_pesanan'], 5, '0', STR_PAD_LEFT); ?></strong>
                                         <span class="text-muted ms-2"><?php echo date('d M Y', strtotime($pesanan['tanggal_pesanan'])); ?></span>
+                                        <?php if ($pesanan['status'] == 'selesai'): ?>
+                                            <a href="umpan_balik.php?id=<?php echo $pesanan['id_pesanan']; ?>" 
+                                               class="btn btn-sm btn-outline-warning ms-2">
+                                                <i class="bi bi-star me-1"></i>Beri Rating
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-end">
                                         <div><strong>Rp <?php echo number_format($pesanan['total_jumlah'], 0, ',', '.'); ?></strong></div>
