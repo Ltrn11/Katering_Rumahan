@@ -99,7 +99,7 @@ $koneksi->close();
         .form-label {
             color: #ddd;
         }
-        .register-text {
+        .register-text {x
             color: #aaa;
         }
         .btn-warning:hover {
@@ -155,7 +155,7 @@ $koneksi->close();
         </button>
     </form>
 
-    <div class="text-center register-text mt-3">
+    <div class="text-center register-text mt-3 text-white-50"> 
         Belum punya akun? <a href="register.php" class="fw-bold text-warning">Daftar sekarang</a>
     </div>
 

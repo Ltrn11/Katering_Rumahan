@@ -69,7 +69,7 @@ if (isset($_SESSION['cart']) && count($_SESSION['cart']) > 0) {
         }
         
         .nav-link {
-            color: white !important;
+            color: rgba(255,255,255,0.8) !important;
             font-weight: 500;
             transition: all 0.3s;
             padding: 8px 15px !important;
@@ -78,6 +78,13 @@ if (isset($_SESSION['cart']) && count($_SESSION['cart']) > 0) {
         
         .nav-link:hover {
             background: rgba(255,255,255,0.2);
+            color: white !important;
+        }
+        
+        .nav-link.active {
+            background: rgba(255,255,255,0.25) !important;
+            color: white !important;
+            font-weight: 600;
         }
         
         .page-header {

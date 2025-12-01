@@ -26,26 +26,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "Password tidak cocok!";
             $message_type = "danger";
         } else {
-            // Cek email
-            $check = $conn->prepare("SELECT id_pengguna FROM Pengguna WHERE email = :email");
-            $check->bindParam(":email", $email);
-            $check->execute();
+            // Cek email di kedua tabel
+            $check_pengguna = $conn->prepare("SELECT id_pengguna FROM Pengguna WHERE email = :email");
+            $check_pengguna->bindParam(":email", $email);
+            $check_pengguna->execute();
 
-            if ($check->rowCount() > 0) {
+            $check_admin = $conn->prepare("SELECT id FROM admin WHERE email = :email");
+            $check_admin->bindParam(":email", $email);
+            $check_admin->execute();
+
+            if ($check_pengguna->rowCount() > 0 || $check_admin->rowCount() > 0) {
                 $message = "Email sudah terdaftar!";
                 $message_type = "danger";
             } else {
                 $hashed = password_hash($pass, PASSWORD_DEFAULT);
 
-                $insert = $conn->prepare("INSERT INTO Pengguna
-                    (nama_pengguna, email, telepon, kata_sandi, peran)
-                    VALUES (:nama, :email, :telepon, :pass, :peran)");
+                // Insert berdasarkan peran yang dipilih
+                if ($peran === 'admin') {
+                    // Insert ke tabel admin
+                    $insert = $conn->prepare("INSERT INTO admin
+                        (nama_admin, email, telepon, password)
+                        VALUES (:nama, :email, :telepon, :pass)");
+                } else {
+                    // Insert ke tabel Pengguna
+                    $insert = $conn->prepare("INSERT INTO Pengguna
+                        (nama_pengguna, email, telepon, kata_sandi, peran)
+                        VALUES (:nama, :email, :telepon, :pass, :peran)");
+                    $insert->bindParam(":peran", $peran);
+                }
 
                 $insert->bindParam(":nama", $nama);
                 $insert->bindParam(":email", $email);
                 $insert->bindParam(":telepon", $telepon);
                 $insert->bindParam(":pass", $hashed);
-                $insert->bindParam(":peran", $peran);
 
                 if ($insert->execute()) {
                     $message = "Pendaftaran berhasil! Silakan login.";

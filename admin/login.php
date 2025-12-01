@@ -6,17 +6,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Pakai MySQLi
-    $stmt = $koneksi->prepare("SELECT * FROM Pengguna WHERE email = ? AND peran = 'admin'");
+    // Cek di tabel admin (bukan Pengguna)
+    $stmt = $koneksi->prepare("SELECT * FROM admin WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     $data = $result->fetch_assoc();
 
     if ($data) {
-        if (password_verify($password, $data['kata_sandi'])) {
-            $_SESSION['admin_id'] = $data['id_pengguna'];
-            $_SESSION['admin_nama'] = $data['nama_pengguna'];
+        if (password_verify($password, $data['password'])) {
+            $_SESSION['admin_id'] = $data['id'];
+            $_SESSION['admin_nama'] = $data['nama_admin'];
             $_SESSION['admin_email'] = $data['email'];
 
             header("Location: dashboard.php");
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="text-center mt-3">
             <small class="text-muted">
-                Default: admin@katering.com / admin123
+                Belum punya akun admin? <a href="../register.php">Daftar disini</a>
             </small>
         </div>
         
