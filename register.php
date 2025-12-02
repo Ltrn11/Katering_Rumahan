@@ -25,7 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($pass !== $confirm_pass) {
             $message = "Password tidak cocok!";
             $message_type = "danger";
+
         } else {
+
             // Cek email di kedua tabel
             $check_pengguna = $conn->prepare("SELECT id_pengguna FROM Pengguna WHERE email = :email");
             $check_pengguna->bindParam(":email", $email);
@@ -38,37 +40,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($check_pengguna->rowCount() > 0 || $check_admin->rowCount() > 0) {
                 $message = "Email sudah terdaftar!";
                 $message_type = "danger";
-            } else {
-                $hashed = password_hash($pass, PASSWORD_DEFAULT);
 
-                // Insert berdasarkan peran yang dipilih
+            } else {
+
+                // ===========================================
+                // 🔥 LIMIT ADMIN (maksimal 3)
+                // ===========================================
+                $allowed_create_admin = true;
+
                 if ($peran === 'admin') {
-                    // Insert ke tabel admin
-                    $insert = $conn->prepare("INSERT INTO admin
-                        (nama_admin, email, telepon, password)
-                        VALUES (:nama, :email, :telepon, :pass)");
-                } else {
-                    // Insert ke tabel Pengguna
-                    $insert = $conn->prepare("INSERT INTO Pengguna
-                        (nama_pengguna, email, telepon, kata_sandi, peran)
-                        VALUES (:nama, :email, :telepon, :pass, :peran)");
-                    $insert->bindParam(":peran", $peran);
+                    $checkTotal = $conn->query("SELECT COUNT(*) AS total FROM admin")
+                                       ->fetch(PDO::FETCH_ASSOC)['total'];
+
+                    if ($checkTotal >= 3) {
+                        $message = "Pendaftaran admin dibatasi maksimal 3 orang.";
+                        $message_type = "danger";
+                        $allowed_create_admin = false;
+                    }
                 }
 
-                $insert->bindParam(":nama", $nama);
-                $insert->bindParam(":email", $email);
-                $insert->bindParam(":telepon", $telepon);
-                $insert->bindParam(":pass", $hashed);
+                // Jika admin sudah penuh → hentikan proses insert
+                if ($allowed_create_admin) {
 
-                if ($insert->execute()) {
-                    $message = "Pendaftaran berhasil! Silakan login.";
-                    $message_type = "success";
-                } else {
-                    $message = "Pendaftaran gagal!";
-                    $message_type = "danger";
+                    // Hash password
+                    $hashed = password_hash($pass, PASSWORD_DEFAULT);
+
+                    // Insert berdasarkan peran
+                    if ($peran === 'admin') {
+                        $insert = $conn->prepare("INSERT INTO admin
+                            (nama_admin, email, telepon, password)
+                            VALUES (:nama, :email, :telepon, :pass)");
+                    } else {
+                        $insert = $conn->prepare("INSERT INTO Pengguna
+                            (nama_pengguna, email, telepon, kata_sandi, peran)
+                            VALUES (:nama, :email, :telepon, :pass, :peran)");
+                        $insert->bindParam(":peran", $peran);
+                    }
+
+                    $insert->bindParam(":nama", $nama);
+                    $insert->bindParam(":email", $email);
+                    $insert->bindParam(":telepon", $telepon);
+                    $insert->bindParam(":pass", $hashed);
+
+                    if ($insert->execute()) {
+                        $message = "Pendaftaran berhasil! Silakan login.";
+                        $message_type = "success";
+                    } else {
+                        $message = "Pendaftaran gagal!";
+                        $message_type = "danger";
+                    }
                 }
             }
         }
+
     } catch (PDOException $e) {
         $message = "Database error: " . $e->getMessage();
         $message_type = "danger";
@@ -88,7 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <style>
         body {
-            background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836') no-repeat center center/cover;
+            background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836')
+            no-repeat center center/cover;
             height: 100vh;
             display: flex;
             justify-content: center;

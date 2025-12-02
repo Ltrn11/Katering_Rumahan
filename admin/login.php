@@ -2,12 +2,20 @@
 session_start();
 require '../koneksi.php';
 
+// Redirect jika sudah login
+if (isset($_SESSION['admin_logged_in'])) {
+    header("Location: dashboard.php");
+    exit();
+}
+
+$error = "";
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Cek di tabel admin (bukan Pengguna)
-    $stmt = $koneksi->prepare("SELECT * FROM admin WHERE email = ?");
+    // Cek di tabel admin
+    $stmt = $koneksi->prepare("SELECT id, nama_admin, email, password FROM admin WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -15,19 +23,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($data) {
         if (password_verify($password, $data['password'])) {
+            // Set session admin (TANPA role, semua admin sama)
+            $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_id'] = $data['id'];
             $_SESSION['admin_nama'] = $data['nama_admin'];
             $_SESSION['admin_email'] = $data['email'];
 
             header("Location: dashboard.php");
-            exit;
+            exit();
         } else {
             $error = "Password salah!";
         }
     } else {
         $error = "Email tidak terdaftar sebagai admin!";
     }
+    
+    $stmt->close();
 }
+
+$koneksi->close();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -77,6 +91,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
         }
+        
+        .security-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -99,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="../index.php">
-                        <i class="bi bi-person me-1"></i>Login User
+                        <i class="bi bi-person me-1"></i>Login Pelanggan
                     </a>
                 </li>
                 <li class="nav-item">
@@ -121,14 +144,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger">
+            <div class="alert alert-danger alert-dismissible fade show">
                 <i class="bi bi-exclamation-circle me-2"></i><?php echo $error; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
         <form action="" method="POST">
             <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label">Email Admin</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                     <input type="email" name="email" class="form-control" required placeholder="admin@katering.com">
@@ -144,14 +168,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <button type="submit" class="btn btn-login btn-primary w-100 py-2">
-                <i class="bi bi-box-arrow-in-right me-2"></i>Masuk
+                <i class="bi bi-box-arrow-in-right me-2"></i>Masuk ke Dashboard
             </button>
         </form>
 
-        <div class="text-center mt-3">
-            <small class="text-muted">
-                Belum punya akun admin? <a href="../register.php">Daftar disini</a>
-            </small>
+        <div class="security-notice">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Akun admin terbatas.</strong><br>
+            <small>Hubungi pemilik sistem untuk mendapatkan akses.</small>
         </div>
         
         <hr class="my-3">
@@ -159,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="text-center">
             <small class="text-muted">Bukan admin?</small><br>
             <a href="../index.php" class="btn btn-sm btn-outline-primary mt-2">
-                <i class="bi bi-person me-1"></i>Login sebagai User
+                <i class="bi bi-person me-1"></i>Login sebagai Pelanggan
             </a>
         </div>
     </div>
