@@ -237,6 +237,47 @@ if (isset($_SESSION['cart'])) {
             font-size: 4rem;
             margin-bottom: 20px;
         }
+        
+        /* WhatsApp Floating Button */
+        .whatsapp-float {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            bottom: 30px;
+            right: 30px;
+            background-color: #25D366;
+            color: #FFF;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 30px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .whatsapp-float:hover {
+            background-color: #20BA5A;
+            transform: scale(1.1);
+            color: white;
+        }
+        
+        .whatsapp-float i {
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .whatsapp-float {
+                width: 50px;
+                height: 50px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 25px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -254,6 +295,11 @@ if (isset($_SESSION['cart'])) {
                     <li class="nav-item">
                         <a class="nav-link active" href="dashboard.php">
                             <i class="bi bi-house-door me-1"></i>Menu
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://wa.me/6282249558367?text=Halo,%20saya%20ingin%20bertanya%20tentang%20menu%20katering" target="_blank">
+                            <i class="bi bi-whatsapp me-1"></i>Kontak
                         </a>
                     </li>
                     
@@ -424,6 +470,14 @@ if (isset($_SESSION['cart'])) {
             </div>
         <?php endif; ?>
     </div>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/6282249558367?text=Halo,%20saya%20ingin%20bertanya%20tentang%20menu%20katering" 
+       class="whatsapp-float" 
+       target="_blank"
+       title="Hubungi via WhatsApp">
+        <i class="bi bi-whatsapp"></i>
+    </a>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

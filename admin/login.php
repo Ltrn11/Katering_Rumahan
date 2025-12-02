@@ -173,10 +173,14 @@ $koneksi->close();
         </form>
 
         <div class="security-notice">
-            <i class="bi bi-info-circle me-1"></i>
-            <strong>Akun admin terbatas.</strong><br>
-            <small>Hubungi pemilik sistem untuk mendapatkan akses.</small>
+        <i class="bi bi-info-circle me-1"></i>
+        <strong>Akun admin terbatas.</strong><br>
+        <small>Hubungi pemilik sistem untuk mendapatkan akses:<br>
+        <i class="bi bi-whatsapp me-1"></i> <a href="https://wa.me/6282249558367" target="_blank">+62 822-4955-8367</a><br>
+        <i class="bi bi-envelope me-1"></i> <a href="mailto:samuel11lumbantoruan@gmail.com">samuel11lumbantoruan@gmail.com</a>
+        </small>
         </div>
+
         
         <hr class="my-3">
         

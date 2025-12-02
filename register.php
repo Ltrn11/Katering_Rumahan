@@ -9,7 +9,6 @@ $message = '';
 $message_type = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     try {
         $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -21,14 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $confirm_pass = $_POST['confirm_password'];
         $peran = $_POST['peran'];
 
-        // Validasi password
         if ($pass !== $confirm_pass) {
             $message = "Password tidak cocok!";
             $message_type = "danger";
-
         } else {
-
-            // Cek email di kedua tabel
             $check_pengguna = $conn->prepare("SELECT id_pengguna FROM Pengguna WHERE email = :email");
             $check_pengguna->bindParam(":email", $email);
             $check_pengguna->execute();
@@ -40,12 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($check_pengguna->rowCount() > 0 || $check_admin->rowCount() > 0) {
                 $message = "Email sudah terdaftar!";
                 $message_type = "danger";
-
             } else {
-
-                // ===========================================
-                // 🔥 LIMIT ADMIN (maksimal 3)
-                // ===========================================
                 $allowed_create_admin = true;
 
                 if ($peran === 'admin') {
@@ -53,27 +43,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                        ->fetch(PDO::FETCH_ASSOC)['total'];
 
                     if ($checkTotal >= 3) {
-                        $message = "Pendaftaran admin dibatasi maksimal 3 orang.";
+                        $message = "Pendaftaran admin dibatasi maksimal 3 orang.<br><br>
+                        <div style='font-size:0.9rem;'>
+                        Silakan hubungi pemilik sistem untuk akses tambahan:<br>
+                        <i class='bi bi-whatsapp'></i> <a href='https://wa.me/6282249558367' target='_blank' style='color:#fff;'>+62 822-4955-8367</a><br>
+                        <i class='bi bi-envelope'></i> <a href='mailto:samuel11lumbantoruan@gmail.com' style='color:#fff;'>amuel11lumbantoruan@gmail.com</a>
+                        </div>";
                         $message_type = "danger";
                         $allowed_create_admin = false;
                     }
                 }
 
-                // Jika admin sudah penuh → hentikan proses insert
                 if ($allowed_create_admin) {
-
-                    // Hash password
                     $hashed = password_hash($pass, PASSWORD_DEFAULT);
 
-                    // Insert berdasarkan peran
                     if ($peran === 'admin') {
-                        $insert = $conn->prepare("INSERT INTO admin
-                            (nama_admin, email, telepon, password)
-                            VALUES (:nama, :email, :telepon, :pass)");
+                        $insert = $conn->prepare("INSERT INTO admin (nama_admin, email, telepon, password)
+                                                  VALUES (:nama, :email, :telepon, :pass)");
                     } else {
-                        $insert = $conn->prepare("INSERT INTO Pengguna
-                            (nama_pengguna, email, telepon, kata_sandi, peran)
-                            VALUES (:nama, :email, :telepon, :pass, :peran)");
+                        $insert = $conn->prepare("INSERT INTO Pengguna (nama_pengguna, email, telepon, kata_sandi, peran)
+                                                  VALUES (:nama, :email, :telepon, :pass, :peran)");
                         $insert->bindParam(":peran", $peran);
                     }
 
@@ -92,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-
     } catch (PDOException $e) {
         $message = "Database error: " . $e->getMessage();
         $message_type = "danger";
@@ -104,16 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Register - Katering Rumahan</title>
-
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         body {
-            background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836')
-            no-repeat center center/cover;
+            background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836') no-repeat center center/cover;
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -140,6 +123,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: bold;
             text-decoration: none;
         }
+        .alert a {
+            color: #fff;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -154,7 +141,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form method="POST">
-
         <label class="form-label">Nama Lengkap</label>
         <div class="input-group mb-3">
             <span class="input-group-text"><i class="bi bi-person"></i></span>
@@ -200,7 +186,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <p class="text-center mt-3 back-login">
         Sudah punya akun? <a href="index.php">Login</a>
     </p>
-
 </div>
 
 </body>
